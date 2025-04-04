@@ -2,6 +2,8 @@
   <nav>
     <router-link to="/about">Abo ut</router-link>
     <router-link to ="/login">Login</router-link>
+    <router-link to ="/operar">Operar</router-link> <!--  <router-link to ="{name: 'NOMBRE DE LA RUTA'} ">Operar</router-link> -->
+
   </nav>
   <router-view/>
 </template>

@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import LoginView from "@/views/LoginView.vue";
+import OperarView from "@/views/OperarView.vue";
 const routes = [
   {
     path: "/", //este es el camino
@@ -20,6 +21,11 @@ const routes = [
     path: "/login",
     name: "login",
     component: LoginView,
+  },
+  {
+    path: "/operar", //este es el camino
+    name: "operar", //este es el nombre que va a tener la ruta o enrutamiento
+    component: OperarView, //es el nombre del componente
   },
 ];
 

@@ -20,11 +20,11 @@ class ManagerCripto {
 OperacionesDeComercio = [
     {
         option: "purchase",
-        name: "purchase"
+        name: "Compra"
     },
     {
         option: "sell",
-        name: "sell"
+        name: "Venta"
     },
 ]
 //constructor
@@ -42,3 +42,4 @@ async TraerPrecio(Crypto) {
         console.log(err)
     }
 }}
+export default ManagerCripto
