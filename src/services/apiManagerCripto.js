@@ -23,7 +23,7 @@ OperacionesDeComercio = [
         name: "Compra"
     },
     {
-        option: "sell",
+        option: "sale",
         name: "Venta"
     },
 ]

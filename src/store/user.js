@@ -4,18 +4,18 @@ export const userStore =defineStore('User',{
 
     state:()=> {
         return{
-            Logeado:false,
+            Logueado:false,
             Usuario:'',
         }
     },
     actions:{
         Loguear(nombre){
             this.Usuario=nombre,
-            this.Logeado=true
+            this.Logueado=true
         },
         Deslogueo(){
             this.Usuario='',
-            this.Logeado=false
+            this.Logueado=false
         }
     }
 })

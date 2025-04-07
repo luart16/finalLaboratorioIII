@@ -1,5 +1,4 @@
 import axios from 'axios'; //importo axios
-import { from } from 'core-js/core/array';
 
 //aquí debajo pego el código que pasó el profe:
 const apiClient = axios.create({

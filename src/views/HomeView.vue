@@ -1,18 +1,18 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+   <nav>
+    <div v-if="store.Logueado"> <!--Si el usuario no está logueado no se va a mostrar lo que está dentro de este div que es el botón de operar-->
+      <router-link :to="{name: 'operar'}">Operar</router-link> <!--  <router-link to ="{name: 'NOMBRE DE LA RUTA'} ">Operar</router-link> -->
+    </div>
+    <div v-else>
+<h1>
+  Ve a loguear 
+  <button>Login</button>
+</h1>    </div>
+  </nav>
+  <h1>Vista home</h1>
 </template>
 
-<script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
-
-export default {
-  name: 'HomeView',
-  components: {
-    HelloWorld
-  }
-}
+<script setup>
+import { userStore } from '../store/user';
+const store = userStore();
 </script>
