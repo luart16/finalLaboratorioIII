@@ -2,6 +2,7 @@
    <nav>
     <div v-if="store.Logueado"> <!--Si el usuario no está logueado no se va a mostrar lo que está dentro de este div que es el botón de operar-->
       <router-link :to="{name: 'operar'}">Operar</router-link> <!--  <router-link to ="{name: 'NOMBRE DE LA RUTA'} ">Operar</router-link> -->
+      <router-link :to="{name: 'historial'}">Historial de Movimientos</router-link>
     </div>
     <div v-else>
 <h1>
