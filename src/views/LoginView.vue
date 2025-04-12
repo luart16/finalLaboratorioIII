@@ -26,7 +26,7 @@ const store = userStore(); //creo una variable para usar el store
 const nombre = ref(''); //le pongo el ref para que si cambia el nombre me lo cambie
 const loguearse = () => {
   store.Loguear(nombre.value)
-  alert('Logueado')
+  alert('Inicio de sesión exitoso, has clic en aceptar para continuar')
   router.push({ name: 'home' })
 }
 </script>
