@@ -5,9 +5,8 @@
       <div class="form-group">
         <label>Tipo de operación</label>
         <select v-model="operacion.action">
-          <option v-for="operacion in ManagerC.TraerOperaciones()" :key="operacion.option"
-              :value="operacion.option">
-              {{ operacion.name }}
+          <option v-for="operacion in ManagerC.TraerOperaciones()" :key="operacion.option" :value="operacion.option">
+            {{ operacion.name }}
           </option>
         </select>
       </div>
@@ -15,14 +14,18 @@
         <label>Tipo de criptomoneda</label>
         <select v-model="operacion.crypto_code">
           <option v-for="moneda in ManagerC.TraerCrypto()" :key="moneda.code" :value="moneda.code">
-              {{ moneda.name }}
+            {{ moneda.name }}
           </option>
         </select>
       </div>
+      <div>
+        <label for="">Criptomonedas disponibles: {{ saldoDeUsuario }}</label>
+      </div>
+      <div>
+      </div>
       <div class="form-group">
         <label>Cantidad de criptomonedas</label>
-        <input type="number" min="0.000001" v-model="operacion.crypto_amount"
-            placeholder="Cantidad de criptomonedas">
+        <input type="number" min="0.000001" v-model="operacion.crypto_amount" placeholder="Cantidad de criptomonedas">
       </div>
       <p>Cantidad en pesos argentinos ${{ operacion.money }}</p>
       <div class="form-group-row">
@@ -44,76 +47,105 @@
 import ManagerCripto from "@/services/apiManagerCripto"
 import { userStore } from "@/store/user"
 import { ref, watch, onMounted } from "vue"
+import { useRouter } from "vue-router"
 import Transacciones from "@/services/apiTransacciones"
-
+const ruta = useRouter()
 const store = userStore()
 const ManagerC = new ManagerCripto()
 
 let operacion = ref({
-    user_id: store.Usuario,
-    action: 'purchase', //compra
-    crypto_code: 'btc',
-    crypto_amount: 0,
-    money: 0,
-    datetime: ''
+  user_id: store.Usuario,
+  action: 'purchase', //compra
+  crypto_code: 'btc',
+  crypto_amount: 0,
+  money: 0,
+  datetime: ''
 })
 const ActualizarPrecio = async () => {
-    function validarCantidadCripto(cantidad) {
-        const numeroCantidad = Number(cantidad)
-        return isNaN(numeroCantidad) || numeroCantidad <= 0 ? 0 : numeroCantidad
-    }
+  function validarCantidadCripto(cantidad) {
+    const numeroCantidad = Number(cantidad)
+    return isNaN(numeroCantidad) || numeroCantidad <= 0 ? 0 : numeroCantidad
+  }
 
-    const cantidadCripto = validarCantidadCripto(operacion.value.crypto_amount)
-    if (cantidadCripto > 0) {
-        const { totalAsk, totalBid } = await ManagerC.TraerPrecio(operacion.value.crypto_code)
-        const precio = operacion.value.action === "purchase" ? totalAsk : totalBid;
-        operacion.value.money = (precio * cantidadCripto).toFixed(2);
-        /* traer precio devuelve este dos datos del siguiente objeto: que lo obtiene llamando a la api que lo llamamos pasando el tipo de criptomoneda
-        {
-  "ask": 109568192.72,
-  "totalAsk": 109568192.72, ++++++ me trae esto
-  "bid": 100841520,
-  "totalBid": 100841520, ++++++ y me trae esto. Son las dos cosas que le estoy pidiendo del objeto
-  "time": 1733306089
+  const cantidadCripto = validarCantidadCripto(operacion.value.crypto_amount)
+  if (cantidadCripto > 0) {
+    const { totalAsk, totalBid } = await ManagerC.TraerPrecio(operacion.value.crypto_code)
+    const precio = operacion.value.action === "purchase" ? totalAsk : totalBid;
+    operacion.value.money = (precio * cantidadCripto).toFixed(2);
+    /* traer precio devuelve este dos datos del siguiente objeto: que lo obtiene llamando a la api que lo llamamos pasando el tipo de criptomoneda
+    {
+"ask": 109568192.72,
+"totalAsk": 109568192.72, ++++++ me trae esto
+"bid": 100841520,
+"totalBid": 100841520, ++++++ y me trae esto. Son las dos cosas que le estoy pidiendo del objeto
+"time": 1733306089
 }
-        */
-    } else {
-        operacion.value.money = 0
-    }
+    */
+  } else {
+    operacion.value.money = 0
+  }
 }
 //Esto es para la fecha y hora:
 const fechaActual = new Date();
 let fecha = ref({
-    actual: fechaActual.toISOString().split('T')[0], //fecha en formato año/mes/día
-    hora: "00:00", //hora inicial predeterminada que va a figurar en la pantalla antes de cambiarla
+  actual: fechaActual.toISOString().split('T')[0], //fecha en formato año/mes/día
+  hora: "00:00", //hora inicial predeterminada que va a figurar en la pantalla antes de cambiarla
 });
 
 const Fecha = () => {
-    const [anio, mes, dia] = fecha.value.actual.split("-").map(Number);
-    const [hora, minuto] = fecha.value.hora.split(":").map(Number);
-    operacion.value.datetime = new Date(anio, mes - 1, dia, hora, minuto).toISOString();
+  const [anio, mes, dia] = fecha.value.actual.split("-").map(Number);
+  const [hora, minuto] = fecha.value.hora.split(":").map(Number);
+  operacion.value.datetime = new Date(anio, mes - 1, dia, hora, minuto).toISOString();
 }
 
 const CompraVenta = async () => {
-    const { action } = operacion.value;
-    try {
-        if (action === "purchase") {
-            console.log(operacion.value)
-            await Transacciones.postTransaccion({ ...operacion.value })
-            console.log("Operación exitosa")
+  const { action } = operacion.value;
+  try {
+    if (action === "purchase") {
+      console.log(operacion.value)
+      await Transacciones.postTransaccion({ ...operacion.value })
+      alert('Operación exitosa compra')
+      ruta.push({ name: 'historial' })
+    }
+    else {
+      if (saldoDeUsuario.value >= operacion.value.crypto_amount) {
+        await Transacciones.postTransaccion({ ...operacion.value })
+        alert('Operación exitosa venta')
+        ruta.push({ name: 'historial' })
+      }
+      else {
+        alert('cantidad de criptomonedas insuficientes')
+      }
+    }
 
-        }
-    }
-    catch (error) {
-        console.log(error)
-    }
+  }
+  catch (error) {
+    console.log(error)
+  }
 }
 
+const saldoDeUsuario = ref(0);
+const conseguirSaldoUsuario = async () => {
+  try {
+    await Transacciones.traerTransacciones()
+    const saldo = Transacciones.conseguirSaldo();
+    console.log(saldo)
+    const moneda = saldo.find((cripto) => cripto.codigo === operacion.value.crypto_code);
+    console.log(moneda, "moneda")
+    saldoDeUsuario.value = moneda ? moneda.saldo : 0;
+    console.log(saldoDeUsuario.value, "saldo de usuario")
+  }
+  catch (error) {
+    console.log(error)
+  }
+
+}
 watch(ActualizarPrecio, operacion.value);
 watch(fecha, Fecha());
-
+watch(() => operacion.value.crypto_code,conseguirSaldoUsuario)
 onMounted(() => {
-    Fecha();
+  Fecha();
+  conseguirSaldoUsuario()
 })
 </script>
 
@@ -150,7 +182,8 @@ onMounted(() => {
   justify-content: center;
 }
 
-input, select {
+input,
+select {
   padding: 12px;
   font-size: 15px;
   border: 1px solid #cfd8dc;
@@ -158,7 +191,8 @@ input, select {
   outline: none;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   border-color: #3949ab;
   box-shadow: 0 0 0 2px rgba(57, 73, 171, 0.1);
 }

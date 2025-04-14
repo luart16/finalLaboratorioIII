@@ -15,12 +15,24 @@
         </div>
       </h1>
     </div>
+    <button @click="Desloguear">Cerrar sesión</button> <!--acá llamo a la función de desloguear que creé abajo en el script-->
   </div>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import { userStore } from '../store/user';
 const store = userStore();
+const ruta = useRouter();
+
+//creo la función para desloguearme y luego arriba creo el botón y la llamo
+const Desloguear =() => {
+  store.Deslogueo() //aquí se desloguea y debajo pongo para que me lleve al loguin
+  ruta.push({ 
+    name:"login"
+  })
+
+}
 </script>
 
 <style scoped>
