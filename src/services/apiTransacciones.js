@@ -63,7 +63,7 @@ class Transacciones {
         case "purchase":
           saldosTrabajados[criptoPrevia] += trade.crypto_amount;
           break;
-          case "sale":
+        case "sale":
           saldosTrabajados[criptoPrevia] -= trade.crypto_amount;
           break;
       }
@@ -71,11 +71,19 @@ class Transacciones {
 
     if (criptoPrevia) {
       saldos.push({
-        codigo : criptoPrevia,
-        saldo : saldosTrabajados[criptoPrevia]
+        codigo: criptoPrevia,
+        saldo: saldosTrabajados[criptoPrevia],
       });
     }
-    return saldos
+    return saldos;
+  }
+
+  static async editarTransacciones(transaccion) {
+    try {
+      await apiClient.patch(`/transactions/${transaccion._id}`, transaccion);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 export default Transacciones;
