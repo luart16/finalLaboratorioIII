@@ -21,14 +21,21 @@
 import { ref } from 'vue'; //esto es para rastrear cambios.
 import { userStore } from '@/store/user'; // importo el userStore para poder usarlo debajo
 import { useRouter } from 'vue-router'
+
+import { useToast } from 'vue-toastification';
+const toast=useToast()
+
 const router = useRouter()
 const store = userStore(); //creo una variable para usar el store
 const nombre = ref(''); //le pongo el ref para que si cambia el nombre me lo cambie
+
 const loguearse = () => {
   store.Loguear(nombre.value)
-  alert('Inicio de sesión exitoso, has clic en aceptar para continuar')
+  toast.success(`Logueado con exito.
+  Bienvenido ${store.Usuario}`,)
   router.push({ name: 'home' })
 }
+
 </script>
 
 <style scoped>

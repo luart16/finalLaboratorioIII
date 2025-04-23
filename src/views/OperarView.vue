@@ -1,46 +1,56 @@
 <template>
-  <div class="operar-container">
-    <div class="operar-box">
-      <h1>Operar con Criptomonedas</h1>
-      <div class="form-group">
-        <label>Tipo de operación</label>
-        <select v-model="operacion.action">
-          <option v-for="operacion in ManagerC.TraerOperaciones()" :key="operacion.option" :value="operacion.option">
-            {{ operacion.name }}
-          </option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Tipo de criptomoneda</label>
-        <select v-model="operacion.crypto_code">
-          <option v-for="moneda in ManagerC.TraerCrypto()" :key="moneda.code" :value="moneda.code">
-            {{ moneda.name }}
-          </option>
-        </select>
-      </div>
-      <div>
-        <label for="">Criptomonedas disponibles: {{ saldoDeUsuario }}</label>
-      </div>
-      <div>
-      </div>
-      <div class="form-group">
-        <label>Cantidad de criptomonedas</label>
-        <input type="number" min="0.000001" v-model="operacion.crypto_amount" placeholder="Cantidad de criptomonedas">
-      </div>
-      <p>Cantidad en pesos argentinos ${{ operacion.money }}</p>
-      <div class="form-group-row">
+  <div v-if="store.Logueado">
+    <NavBar />
+    <div class="operar-container">
+      <div class="operar-box">
+        <h1>Operar con Criptomonedas</h1>
         <div class="form-group">
-          <label>Fecha</label>
-          <input v-model="fecha.actual" type="date" />
+          <label>Tipo de operación</label>
+          <select v-model="operacion.action">
+            <option v-for="operacion in ManagerC.TraerOperaciones()" :key="operacion.option" :value="operacion.option">
+              {{ operacion.name }}
+            </option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Hora</label>
-          <input v-model="fecha.hora" type="time" />
+          <label>Tipo de criptomoneda</label>
+          <select v-model="operacion.crypto_code">
+            <option v-for="moneda in ManagerC.TraerCrypto()" :key="moneda.code" :value="moneda.code">
+              {{ moneda.name }}
+            </option>
+          </select>
         </div>
+        <div>
+          <label for="">Criptomonedas disponibles: {{ saldoDeUsuario }}</label>
+        </div>
+        <div>
+        </div>
+        <div class="form-group">
+          <label>Cantidad de criptomonedas</label>
+          <input type="number" min="0.000001" v-model="operacion.crypto_amount" placeholder="Cantidad de criptomonedas">
+        </div>
+        <p>Cantidad en pesos argentinos ${{ operacion.money }}</p>
+        <div class="form-group-row">
+          <div class="form-group">
+            <label>Fecha</label>
+            <input v-model="fecha.actual" type="date" />
+          </div>
+          <div class="form-group">
+            <label>Hora</label>
+            <input v-model="fecha.hora" type="time" />
+          </div>
+        </div>
+        <button @click="CompraVenta" class="btn-principal">Operar</button>
       </div>
-      <button @click="CompraVenta" class="btn-principal">Operar</button>
     </div>
   </div>
+  <div v-else>
+    <h1>IR AL LOGIN</h1>
+<button @click="irAlLogin" >
+IR AL LOGIN
+</button> 
+ </div>
+
 </template>
 
 <script setup>
@@ -49,10 +59,17 @@ import { userStore } from "@/store/user"
 import { ref, watch, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import Transacciones from "@/services/apiTransacciones"
+import NavBar from '@/components/Navegacion-Component.vue'
+
+import { useToast } from 'vue-toastification';
+const toast = useToast()
+
 const ruta = useRouter()
 const store = userStore()
 const ManagerC = new ManagerCripto()
-
+const irAlLogin = () => {
+ruta.push({name: 'login'})
+}
 let operacion = ref({
   user_id: store.Usuario,
   action: 'purchase', //compra
@@ -104,17 +121,17 @@ const CompraVenta = async () => {
     if (action === "purchase") {
       console.log(operacion.value)
       await Transacciones.postTransaccion({ ...operacion.value })
-      alert('Operación exitosa compra')
+      toast.success("Compra exitosa")
       ruta.push({ name: 'historial' })
     }
     else {
       if (saldoDeUsuario.value >= operacion.value.crypto_amount) {
         await Transacciones.postTransaccion({ ...operacion.value })
-        alert('Operación exitosa venta')
+        toast.success('Venta exitosa')
         ruta.push({ name: 'historial' })
       }
       else {
-        alert('cantidad de criptomonedas insuficientes')
+        toast.warning('cantidad de criptomonedas insuficientes')
       }
     }
 
@@ -142,7 +159,7 @@ const conseguirSaldoUsuario = async () => {
 }
 watch(ActualizarPrecio, operacion.value);
 watch(fecha, Fecha());
-watch(() => operacion.value.crypto_code,conseguirSaldoUsuario)
+watch(() => operacion.value.crypto_code, conseguirSaldoUsuario)
 onMounted(() => {
   Fecha();
   conseguirSaldoUsuario()

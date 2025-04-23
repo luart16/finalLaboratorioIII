@@ -1,10 +1,16 @@
 <template>
-  
-  <router-view/>
+    <div>
+      <router-view />
+    </div>
 </template>
 
 
+<script setup>
+import { userStore } from './store/user';
 
+const store = userStore()
+console.log(store)
+</script>
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;

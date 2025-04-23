@@ -1,5 +1,7 @@
 <template>
   <div v-if="store.Logueado">
+    <NavBar />
+
     <!-- Pantalla de carga -->
     <div v-if="isLoading" class="loading-screen">
       <div class="spinner"></div>
@@ -9,7 +11,7 @@
     <!-- Contenido principal -->
     <div v-if="!isLoading">
       <h2>Historial de operaciones</h2>
-      
+
       <div>
         <table v-if="movimientos.length !== 0">
           <thead>
@@ -53,9 +55,7 @@
         <div>
           <label>Tipo de criptomoneda:</label>
           <select v-model="movimientoAEditar.crypto_code" required>
-            <option v-for="cripto in managerCripto.TraerCrypto()" 
-                    :key="cripto._id" 
-                    :value="cripto.code">
+            <option v-for="cripto in managerCripto.TraerCrypto()" :key="cripto._id" :value="cripto.code">
               {{ cripto.code }}
             </option>
           </select>
@@ -90,6 +90,12 @@
       </div>
     </div>
   </div>
+  <div v-else>
+    <h1>IR AL LOGIN</h1>
+    <button @click="irAlLogin">
+      IR AL LOGIN
+    </button>
+  </div>
 </template>
 
 <script setup>
@@ -98,6 +104,16 @@ import { userStore } from '@/store/user'
 import Transacciones from '@/services/apiTransacciones'
 import { onMounted } from 'vue'
 import ManagerCripto from '@/services/apiManagerCripto'
+import NavBar from '@/components/Navegacion-Component.vue'
+
+import { useToast } from 'vue-toastification';
+const toast = useToast()
+
+import { useRouter } from 'vue-router';
+const ruta = useRouter()
+const irAlLogin = () => {
+  ruta.push({ name: 'login' })
+}
 
 const managerCripto = new ManagerCripto()
 const store = userStore()
@@ -116,9 +132,11 @@ const datos = async () => {
   try {
     const respuesta = await Transacciones.traerTransacciones()
     movimientos.value = respuesta
+    toast.success("Datos cargados")
   } catch (error) {
     console.error('Error al cargar transacciones:', error)
     mensaje.value = "Error al cargar los datos"
+    toast.warning(mensaje.value)
   }
 }
 
@@ -131,10 +149,12 @@ const borrar = (id) => {
 const confirmarBorrado = async () => {
   try {
     await Transacciones.borrarTransaccion(movimientoAEliminar.value)
+    toast.warning('Borrado realizado')
     await datos()
   } catch (error) {
     console.error('Error al eliminar:', error)
     mensaje.value = "Error al eliminar la transacción"
+    toast.warning(mensaje.value)
   } finally {
     mostrarModalEliminar.value = false
   }
@@ -144,15 +164,19 @@ const confirmarBorrado = async () => {
 const verificarParaEditar = async (id) => {
   mensaje.value = ""
   const transaccion = movimientos.value.find(mov => mov._id === id)
-  
+
   if (await validarTransaccion(transaccion)) {
     const fechaUTC = new Date(transaccion.datetime)
-    const fechaLocal = new Date(fechaUTC.getTime() + fechaUTC.getTimezoneOffset() * 60000)
-    
+
+    // Obtener componentes en UTC
+    const anio = fechaUTC.getUTCFullYear()
+    const mes = String(fechaUTC.getUTCMonth() + 1).padStart(2, '0')
+    const dias = String(fechaUTC.getUTCDate()).padStart(2, '0')
+
     movimientoAEditar.value = {
       ...transaccion,
-      datetime: fechaLocal.toISOString().split('T')[0],
-      time: `${String(fechaLocal.getHours()).padStart(2, '0')}:${String(fechaLocal.getMinutes()).padStart(2, '0')}`
+      datetime: `${anio}-${mes}-${dias}`, // Fecha en formato YYYY-MM-DD
+      time: `${String(fechaUTC.getUTCHours()).padStart(2, '0')}:${String(fechaUTC.getUTCMinutes()).padStart(2, '0')}`
     }
     mostrarModal.value = true
   }
@@ -161,33 +185,41 @@ const verificarParaEditar = async (id) => {
 const validarTransaccion = async (transaccion) => {
   if (!transaccion) {
     mensaje.value = "Transacción no válida"
+    toast.warning(mensaje.value)
     return false
   }
-  
+
   const cantidad = Number(transaccion.crypto_amount)
   if (isNaN(cantidad) || cantidad <= 0) {
     mensaje.value = "El monto debe ser un número positivo"
+    toast.warning(mensaje.value)
     return false
   }
 
   try {
     const saldoDeCuenta = await Transacciones.conseguirSaldo()
     const criptoBalance = saldoDeCuenta.find(c => c.codigo === transaccion.crypto_code)
-    
+
     if (!criptoBalance) {
       mensaje.value = "Criptomoneda no encontrada en el balance"
+      toast.warning(mensaje.value)
+
       return false
     }
-    
+
     if (transaccion.action === 'sale' && cantidad > criptoBalance.saldo) {
       mensaje.value = "Fondos insuficientes para esta transacción"
+      toast.warning(mensaje.value)
+
       return false
     }
-    
+
     return true
   } catch (error) {
     console.error('Error en validación:', error)
     mensaje.value = "Error al validar la transacción"
+    toast.warning(mensaje.value)
+
     return false
   }
 }
@@ -195,18 +227,26 @@ const validarTransaccion = async (transaccion) => {
 const guardarLoEditado = async () => {
   try {
     mensaje.value = ""
-    
+
     if (await validarTransaccion(movimientoAEditar.value)) {
+      // Crear fecha en UTC
+      const [anio, mes, dias] = movimientoAEditar.value.datetime.split('-')
       const [horas, minutos] = movimientoAEditar.value.time.split(':')
-      const fechaActual = new Date(movimientoAEditar.value.datetime)
-      fechaActual.setHours(horas)
-      fechaActual.setMinutes(minutos)
-      
+
+      const fechaActual = new Date(Date.UTC(
+        parseInt(anio),
+        parseInt(mes) - 1, // Los meses van de 0-11
+        parseInt(dias),
+        parseInt(horas),
+        parseInt(minutos)
+      )
+      )
+
       await Transacciones.editarTransacciones({
         ...movimientoAEditar.value,
         datetime: fechaActual.toISOString()
       })
-      
+
       await datos()
       mostrarModal.value = false
     }
@@ -215,7 +255,6 @@ const guardarLoEditado = async () => {
     mensaje.value = "Error al guardar los cambios"
   }
 }
-
 // Carga inicial
 onMounted(async () => {
   try {
@@ -234,10 +273,11 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin: 20px 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-th, td {
+th,
+td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #ddd;
@@ -291,8 +331,13 @@ button:hover {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Modales */
@@ -348,7 +393,8 @@ button:hover {
 }
 
 /* Ajustes inputs */
-input, select {
+input,
+select {
   width: 100%;
   padding: 8px;
   margin: 5px 0 15px;
