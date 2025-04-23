@@ -45,10 +45,7 @@
     </div>
   </div>
   <div v-else>
-    <h1>IR AL LOGIN</h1>
-<button @click="irAlLogin" >
-IR AL LOGIN
-</button> 
+    <RequiereLogin />
  </div>
 
 </template>
@@ -60,6 +57,7 @@ import { ref, watch, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import Transacciones from "@/services/apiTransacciones"
 import NavBar from '@/components/Navegacion-Component.vue'
+import RequiereLogin from "@/components/RequiereLogin.vue"
 
 import { useToast } from 'vue-toastification';
 const toast = useToast()
@@ -67,9 +65,7 @@ const toast = useToast()
 const ruta = useRouter()
 const store = userStore()
 const ManagerC = new ManagerCripto()
-const irAlLogin = () => {
-ruta.push({name: 'login'})
-}
+
 let operacion = ref({
   user_id: store.Usuario,
   action: 'purchase', //compra
@@ -116,30 +112,33 @@ const Fecha = () => {
 }
 
 const CompraVenta = async () => {
-  const { action } = operacion.value;
-  try {
-    if (action === "purchase") {
-      console.log(operacion.value)
-      await Transacciones.postTransaccion({ ...operacion.value })
-      toast.success("Compra exitosa")
-      ruta.push({ name: 'historial' })
-    }
-    else {
-      if (saldoDeUsuario.value >= operacion.value.crypto_amount) {
-        await Transacciones.postTransaccion({ ...operacion.value })
-        toast.success('Venta exitosa')
-        ruta.push({ name: 'historial' })
-      }
-      else {
-        toast.warning('cantidad de criptomonedas insuficientes')
-      }
-    }
+  const { action, crypto_amount } = operacion.value;  
+  if (!crypto_amount || crypto_amount <= 0) { //valido que se coloque una cantidad
+    toast.warning('La cantidad debe ser mayor a cero. Operación cancelada');
+    return;
+  }
 
+  try {
+    if (action === 'purchase') {
+      console.log(operacion.value);
+      await Transacciones.postTransaccion({ ...operacion.value });
+      toast.success('Compra exitosa');
+      ruta.push({ name: 'historial' });
+    } else {
+      // Venta: verificar saldo
+      if (saldoDeUsuario.value >= crypto_amount) {
+        await Transacciones.postTransaccion({ ...operacion.value });
+        toast.success('Venta exitosa');
+        ruta.push({ name: 'historial' });
+      } else {
+        toast.warning('Cantidad de criptomonedas insuficientes. Operación cancelada');
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error('Ocurrió un error al procesar la transacción');
   }
-  catch (error) {
-    console.log(error)
-  }
-}
+};
 
 const saldoDeUsuario = ref(0);
 const conseguirSaldoUsuario = async () => {

@@ -10,7 +10,7 @@
     <div class="login-box">
       <form @submit.prevent="loguearse">
         <input v-model="nombre" type="text" placeholder="Usuario" required />
-        <button type="submit" class="btn-principal">Iniciar sesión</button>      
+        <button type="submit" class="btn-principal">Iniciar sesión</button>
       </form>
     </div>
   </div>
@@ -23,7 +23,7 @@ import { userStore } from '@/store/user'; // importo el userStore para poder usa
 import { useRouter } from 'vue-router'
 
 import { useToast } from 'vue-toastification';
-const toast=useToast()
+const toast = useToast()
 
 const router = useRouter()
 const store = userStore(); //creo una variable para usar el store
@@ -31,8 +31,8 @@ const nombre = ref(''); //le pongo el ref para que si cambia el nombre me lo cam
 
 const loguearse = () => {
   store.Loguear(nombre.value)
-  toast.success(`Logueado con exito.
-  Bienvenido ${store.Usuario}`,)
+  toast.success(`Logueo exitoso.
+Bienvenid@ ${store.Usuario}`,)
   router.push({ name: 'home' })
 }
 
@@ -41,7 +41,9 @@ const loguearse = () => {
 <style scoped>
 * {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}/* al poner el asterisco me aseguro que toda esta página use la misma letra */
+}
+
+/* al poner el asterisco me aseguro que toda esta página use la misma letra */
 
 
 .login-container {

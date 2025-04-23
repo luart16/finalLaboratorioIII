@@ -91,10 +91,7 @@
     </div>
   </div>
   <div v-else>
-    <h1>IR AL LOGIN</h1>
-    <button @click="irAlLogin">
-      IR AL LOGIN
-    </button>
+   <RequiereLogin />
   </div>
 </template>
 
@@ -105,15 +102,9 @@ import Transacciones from '@/services/apiTransacciones'
 import { onMounted } from 'vue'
 import ManagerCripto from '@/services/apiManagerCripto'
 import NavBar from '@/components/Navegacion-Component.vue'
-
+import RequiereLogin from "@/components/RequiereLogin.vue"
 import { useToast } from 'vue-toastification';
 const toast = useToast()
-
-import { useRouter } from 'vue-router';
-const ruta = useRouter()
-const irAlLogin = () => {
-  ruta.push({ name: 'login' })
-}
 
 const managerCripto = new ManagerCripto()
 const store = userStore()
@@ -132,7 +123,7 @@ const datos = async () => {
   try {
     const respuesta = await Transacciones.traerTransacciones()
     movimientos.value = respuesta
-    toast.success("Datos cargados")
+    
   } catch (error) {
     console.error('Error al cargar transacciones:', error)
     mensaje.value = "Error al cargar los datos"
