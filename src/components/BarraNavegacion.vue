@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="nav-container">
-      <router-link to="/home" class="nav-brand">Crypto Market</router-link>
+      <router-link to="/home" class="nav-brand">CriptoMarket</router-link>
       <div class="nav-links">
         <router-link to="/home" class="nav-link" active-class="active-link">
           Inicio

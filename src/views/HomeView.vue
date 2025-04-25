@@ -2,7 +2,7 @@
     <div v-if="store.Logueado"><!--El usuario debe estar logueado para que se muestre lo que está dentro de este div-->
         <NavBar />
         <div class="home-container">
-            <h1>Bienvenido a CryptoMarket</h1>
+            <h1>Bienvenido a CriptoMarket</h1>
             <h2>Tu lugar seguro para comprar y vender criptomonedas</h2>
         </div>
     </div>
@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import NavBar from '@/components/Navegacion-Component.vue'
+import NavBar from '@/components/BarraNavegacion.vue'
 import { userStore } from '@/store/user';
 import RequiereLogin from '@/components/RequiereLogin.vue';
 const store = userStore()

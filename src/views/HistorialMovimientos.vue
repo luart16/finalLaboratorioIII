@@ -32,7 +32,7 @@
               <td>{{ movimiento.crypto_code }}</td>
               <td>{{ movimiento.crypto_amount }}</td>
               <td>{{ movimiento.money }}</td>
-              <td>{{ new Date(movimiento.datetime).toLocaleDateString('es-ES', { timeZone: 'UTC' }) }}</td>
+              <td>{{ new Date(movimiento.datetime).toLocaleString('es-ES', { timeZone: 'UTC' }) }}</td>
               <td>
                 <button @click="borrar(movimiento._id)">Eliminar</button>
                 <button @click="verificarParaEditar(movimiento._id)">Editar</button>
@@ -91,7 +91,7 @@
     </div>
   </div>
   <div v-else>
-   <RequiereLogin />
+    <RequiereLogin />
   </div>
 </template>
 
@@ -101,7 +101,7 @@ import { userStore } from '@/store/user'
 import Transacciones from '@/services/apiTransacciones'
 import { onMounted } from 'vue'
 import ManagerCripto from '@/services/apiManagerCripto'
-import NavBar from '@/components/Navegacion-Component.vue'
+import NavBar from '@/components/BarraNavegacion.vue'
 import RequiereLogin from "@/components/RequiereLogin.vue"
 import { useToast } from 'vue-toastification';
 const toast = useToast()
@@ -123,7 +123,7 @@ const datos = async () => {
   try {
     const respuesta = await Transacciones.traerTransacciones()
     movimientos.value = respuesta
-    
+
   } catch (error) {
     console.error('Error al cargar transacciones:', error)
     mensaje.value = "Error al cargar los datos"
@@ -157,17 +157,15 @@ const verificarParaEditar = async (id) => {
   const transaccion = movimientos.value.find(mov => mov._id === id)
 
   if (await validarTransaccion(transaccion)) {
-    const fechaUTC = new Date(transaccion.datetime)
+    const fechaOriginalTransaccion = new Date(transaccion.datetime)
 
-    // Obtener componentes en UTC
-    const anio = fechaUTC.getUTCFullYear()
-    const mes = String(fechaUTC.getUTCMonth() + 1).padStart(2, '0')
-    const dias = String(fechaUTC.getUTCDate()).padStart(2, '0')
+    const fechaSinHora = fechaOriginalTransaccion.toISOString().split('T')[0] // YYYY-MM-DD
+    const horaSinFecha = fechaOriginalTransaccion.toISOString().split('T')[1].slice(0, 5) // HH:MM
 
     movimientoAEditar.value = {
       ...transaccion,
-      datetime: `${anio}-${mes}-${dias}`, // Fecha en formato YYYY-MM-DD
-      time: `${String(fechaUTC.getUTCHours()).padStart(2, '0')}:${String(fechaUTC.getUTCMinutes()).padStart(2, '0')}`
+      datetime: fechaSinHora,
+      time: horaSinFecha
     }
     mostrarModal.value = true
   }
@@ -237,7 +235,7 @@ const guardarLoEditado = async () => {
         ...movimientoAEditar.value,
         datetime: fechaActual.toISOString()
       })
-
+      toast.success("Modificación exitosa")
       await datos()
       mostrarModal.value = false
     }

@@ -46,7 +46,7 @@
   </div>
   <div v-else>
     <RequiereLogin />
- </div>
+  </div>
 
 </template>
 
@@ -56,19 +56,18 @@ import { userStore } from "@/store/user"
 import { ref, watch, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import Transacciones from "@/services/apiTransacciones"
-import NavBar from '@/components/Navegacion-Component.vue'
+import NavBar from '@/components/BarraNavegacion.vue'
 import RequiereLogin from "@/components/RequiereLogin.vue"
-
 import { useToast } from 'vue-toastification';
-const toast = useToast()
 
+const toast = useToast()
 const ruta = useRouter()
 const store = userStore()
 const ManagerC = new ManagerCripto()
 
 let operacion = ref({
   user_id: store.Usuario,
-  action: 'purchase', //compra
+  action: 'purchase',
   crypto_code: 'btc',
   crypto_amount: 0,
   money: 0,
@@ -85,7 +84,7 @@ const ActualizarPrecio = async () => {
     const { totalAsk, totalBid } = await ManagerC.TraerPrecio(operacion.value.crypto_code)
     const precio = operacion.value.action === "purchase" ? totalAsk : totalBid;
     operacion.value.money = (precio * cantidadCripto).toFixed(2);
-    /* traer precio devuelve este dos datos del siguiente objeto: que lo obtiene llamando a la api que lo llamamos pasando el tipo de criptomoneda
+    /* traer precio devuelve estos dos datos del siguiente objeto: que lo obtiene llamando a la api que lo llamamos pasando el tipo de criptomoneda
     {
 "ask": 109568192.72,
 "totalAsk": 109568192.72, ++++++ me trae esto
@@ -102,23 +101,22 @@ const ActualizarPrecio = async () => {
 const fechaActual = new Date();
 let fecha = ref({
   actual: fechaActual.toISOString().split('T')[0], //fecha en formato año/mes/día
-  hora: "00:00", //hora inicial predeterminada que va a figurar en la pantalla antes de cambiarla
+  hora: fechaActual.toTimeString().slice(0, 5) //por defecto va a mostrar la hora actual al ingresar a la pantalla
 });
 
 const Fecha = () => {
-  const [anio, mes, dia] = fecha.value.actual.split("-").map(Number);
-  const [hora, minuto] = fecha.value.hora.split(":").map(Number);
-  operacion.value.datetime = new Date(anio, mes - 1, dia, hora, minuto).toISOString();
+  operacion.value.datetime = `${fecha.value.actual}T${fecha.value.hora}`;
 }
 
 const CompraVenta = async () => {
-  const { action, crypto_amount } = operacion.value;  
+  const { action, crypto_amount } = operacion.value;
   if (!crypto_amount || crypto_amount <= 0) { //valido que se coloque una cantidad
     toast.warning('La cantidad debe ser mayor a cero. Operación cancelada');
     return;
   }
 
   try {
+    Fecha(); //Esto actualiza correctamente el datetime justo antes de operar
     if (action === 'purchase') {
       console.log(operacion.value);
       await Transacciones.postTransaccion({ ...operacion.value });
@@ -157,7 +155,7 @@ const conseguirSaldoUsuario = async () => {
 
 }
 watch(ActualizarPrecio, operacion.value);
-watch(fecha, Fecha());
+watch(fecha, Fecha);
 watch(() => operacion.value.crypto_code, conseguirSaldoUsuario)
 onMounted(() => {
   Fecha();

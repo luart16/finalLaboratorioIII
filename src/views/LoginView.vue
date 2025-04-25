@@ -39,12 +39,10 @@ Bienvenid@ ${store.Usuario}`,)
 </script>
 
 <style scoped>
+/* al poner el asterisco me aseguro que toda esta página use la misma letra */
 * {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-
-/* al poner el asterisco me aseguro que toda esta página use la misma letra */
-
 
 .login-container {
   display: flex;
