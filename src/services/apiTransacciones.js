@@ -6,7 +6,8 @@ import ManagerCripto from "./apiManagerCripto";
 class Transacciones {
   static Transaccion = ref([]);
 
-  static async postTransaccion(transaccion) {
+  //creo un método que va a recibir una transacción como parámetro y se la pasa a la api base, a la parte de transacciones
+  static async crearTransaccion(transaccion) {
     try {
       const respuesta = await apiClient.post("/transactions", transaccion); //a la ruta que me pasa el apiClient le agrego la ruta "transactions" para que me lleve a esa ventana
       console.log(respuesta, "datos respuesta");
@@ -14,15 +15,14 @@ class Transacciones {
       console.log(error);
     }
   }
-
+  
+  //creo un método para traer todas las transacciones de un usuario específico y devolverlas en una variable donde las guardo 
   static async traerTransacciones() {
     try {
-      const store = userStore();
+      const store = userStore(); //declaro una variable para usar pinia
 
-      const respuesta = await apiClient.get(
-        `/transactions?q={"user_id": "${store.Usuario}"}`
-      );
-      Transacciones.Transaccion.value = respuesta.data;
+      const respuesta = await apiClient.get(`/transactions?q={"user_id": "${store.Usuario}"}`); //llamo a la api base y traigo todas las transacciones del usuario que le paso por id
+      Transacciones.Transaccion.value = respuesta.data; //guardo esos datos que conseguí arriba en la variable Transaccion
       return respuesta.data;
     } catch (error) {
       console.log(error);
@@ -36,7 +36,7 @@ class Transacciones {
       console.log(error);
     }
   }
-  static conseguirSaldo() {
+  static conseguirSaldo() { //esta función ordena y calcula por criptomoneda el saldo disponible de cada una 
     const saldos = []; //este array se va a devolver cuando sea llamado desde el historial
     const saldosTrabajados = {}; //acá se va a trabajar los saldos de distintas criptomonedas
     const criptos = new ManagerCripto();
@@ -46,6 +46,7 @@ class Transacciones {
     const transaccionesOrdenadas = Transacciones.Transaccion.value
       .slice()
       .sort((a, b) => a.crypto_code.localeCompare(b.crypto_code));
+
     transaccionesOrdenadas.forEach((trade) => {
       if (!criptosValidas.has(trade.crypto_code)) return; //si las cripto no son válidas las ignora
       if (criptoPrevia !== trade.crypto_code) {

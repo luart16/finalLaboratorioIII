@@ -30,10 +30,12 @@ OperacionesDeComercio = [
 //constructor
 constructor() {}
 
-//Métodos
+//Métodos:
+//Creo un método para traer el tipo de monedas:
 TraerCrypto() { return this.monedasCripto }
+//creo un método para traer el tipo de operaciones:
 TraerOperaciones() { return this.OperacionesDeComercio }
-
+//Creo un método para traer los datos de las criptomonedas transformados a peso argentino(lo hace llamando a esa api)
 async TraerPrecio(Crypto) {
     try {
         const respuesta = await axios.get(`https://criptoya.com/api/argenbtc/${Crypto}/ars`)

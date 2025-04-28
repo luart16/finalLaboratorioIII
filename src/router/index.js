@@ -3,6 +3,7 @@ import HomeView from "../views/HomeView.vue";
 import LoginView from "@/views/LoginView.vue";
 import OperarView from "@/views/OperarView.vue";
 import HistorialMovimientos from "@/views/HistorialMovimientos.vue";
+import EstadoActual from "@/views/EstadoActual.vue";
 const routes = [ //acá voy poniendo todas las rutas de las vistas
   {
     path: "/",
@@ -24,6 +25,11 @@ const routes = [ //acá voy poniendo todas las rutas de las vistas
     path: "/operar", 
     name: "operar", 
     component: OperarView, 
+  },
+  {
+    path: "/estadoactual", 
+    name: "estadoactual", 
+    component: EstadoActual, 
   },
 ];
 

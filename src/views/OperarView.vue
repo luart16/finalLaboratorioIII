@@ -118,14 +118,13 @@ const CompraVenta = async () => {
   try {
     Fecha(); //Esto actualiza correctamente el datetime justo antes de operar
     if (action === 'purchase') {
-      console.log(operacion.value);
-      await Transacciones.postTransaccion({ ...operacion.value });
+      await Transacciones.crearTransaccion({ ...operacion.value });
       toast.success('Compra exitosa');
       ruta.push({ name: 'historial' });
     } else {
       // Venta: verificar saldo
       if (saldoDeUsuario.value >= crypto_amount) {
-        await Transacciones.postTransaccion({ ...operacion.value });
+        await Transacciones.crearTransaccion({ ...operacion.value });
         toast.success('Venta exitosa');
         ruta.push({ name: 'historial' });
       } else {
@@ -143,11 +142,8 @@ const conseguirSaldoUsuario = async () => {
   try {
     await Transacciones.traerTransacciones()
     const saldo = Transacciones.conseguirSaldo();
-    console.log(saldo)
     const moneda = saldo.find((cripto) => cripto.codigo === operacion.value.crypto_code);
-    console.log(moneda, "moneda")
     saldoDeUsuario.value = moneda ? moneda.saldo : 0;
-    console.log(saldoDeUsuario.value, "saldo de usuario")
   }
   catch (error) {
     console.log(error)

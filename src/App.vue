@@ -6,10 +6,7 @@
 
 
 <script setup>
-import { userStore } from './store/user';
 
-const store = userStore()
-console.log(store)
 </script>
 <style>
 #app {

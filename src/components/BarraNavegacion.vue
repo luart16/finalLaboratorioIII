@@ -12,6 +12,9 @@
         <router-link to="/historial" class="nav-link" active-class="active-link">
           Historial
         </router-link>
+        <router-link to="/estadoactual" class="nav-link" active-class="active-link">
+          Estado Actual
+        </router-link>
         <button @click="deslogueo">Desloguear</button>
       </div>
     </div>
@@ -26,7 +29,7 @@ const store = userStore()
 const route = useRouter()
 const deslogueo = () => {
   store.Deslogueo()
-route.push({name: 'login'})
+  route.push({ name: 'login' })
 }
 </script>
 <style scoped>

@@ -118,7 +118,7 @@ const mostrarModalEliminar = ref(false)
 const movimientoAEliminar = ref(null)
 const movimientos = ref([])
 
-// Obtener datos iniciales
+// Obtener datos iniciales: este método me trae todas las transacciones por usuario y lo guarda en movimientos, variable que voy a usar en el html para mostrarlos
 const datos = async () => {
   try {
     const respuesta = await Transacciones.traerTransacciones()
@@ -131,7 +131,7 @@ const datos = async () => {
   }
 }
 
-// Lógica de eliminación
+// Método de eliminar: recibe el id y lo guarda en la variable, pasa el modal a true y se muestra el modal y pasa a la función de confirmar eliminar
 const borrar = (id) => {
   movimientoAEliminar.value = id
   mostrarModalEliminar.value = true
@@ -139,15 +139,15 @@ const borrar = (id) => {
 
 const confirmarBorrado = async () => {
   try {
-    await Transacciones.borrarTransaccion(movimientoAEliminar.value)
+    await Transacciones.borrarTransaccion(movimientoAEliminar.value) //recibe el id guardado 
     toast.warning('Borrado realizado')
-    await datos()
+    await datos() // y recarga los movimientos ya actualizados con ese valor borrado
   } catch (error) {
     console.error('Error al eliminar:', error)
     mensaje.value = "Error al eliminar la transacción"
     toast.warning(mensaje.value)
   } finally {
-    mostrarModalEliminar.value = false
+    mostrarModalEliminar.value = false //y por último vuelve el modal a false para cerrarlo
   }
 }
 
