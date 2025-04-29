@@ -16,7 +16,7 @@
                 <tbody>
                     <tr v-for="cripto in estadoActual" :key="cripto.codigo">
                         <td>{{ cripto.codigo.toUpperCase() }}</td>
-                        <td>{{ cripto.saldo.toFixed(6) }}</td>
+                        <td>{{ cripto.saldo }}</td>
                         <td>${{ cripto.precioARS.toFixed(2) }}</td>
                         <td>${{ cripto.totalARS.toFixed(2) }}</td>
                     </tr>
@@ -47,7 +47,7 @@ const ManagerC = new ManagerCripto()
 const estadoActual = ref([]);
 const valorTotal = ref(0);
 
-const traerEstadoActual = async () => {
+const traerEstadoActual = async () => { //esta función la llamo automáticamente al montar el componente
     try {
         // 1.Trae todas las transacciones
         await Transacciones.traerTransacciones();
@@ -55,7 +55,7 @@ const traerEstadoActual = async () => {
         // 2.Calcula el saldo disponible de cada cripto
         const saldos = Transacciones.conseguirSaldo();
 
-        // 3.Trae el precio actual desde CriptoYa para cada cripto
+        // 3.Trae el precio actual desde CriptoYa para cada cripto 
         const precioActualCripto = saldos.map(async (cripto) => {
             const datosDelPrecio = await ManagerC.TraerPrecio(cripto.codigo);
             const precioARS = datosDelPrecio.ask || datosDelPrecio.totalAsk || 0;
@@ -68,11 +68,11 @@ const traerEstadoActual = async () => {
             };
         });
 
-        const resultados = await Promise.all(precioActualCripto);
-        estadoActual.value = resultados;
+        const respuesta = await Promise.all(precioActualCripto);
+        estadoActual.value = respuesta;
 
         // 4.Calcula valor total
-        valorTotal.value = resultados.reduce((sum, cripto) => sum + cripto.totalARS, 0);
+        valorTotal.value = respuesta.reduce((sum, cripto) => sum + cripto.totalARS, 0);
     } catch (error) {
         console.error('Error al traer el estado actual:', error);
     }

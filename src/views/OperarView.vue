@@ -21,13 +21,13 @@
           </select>
         </div>
         <div>
-          <label for="">Criptomonedas disponibles: {{ saldoDeUsuario }}</label>
+          <label>Criptomonedas disponibles: {{ saldoDeUsuario }}</label>
         </div>
         <div>
         </div>
         <div class="form-group">
-          <label>Cantidad de criptomonedas</label>
-          <input type="number" min="0.000001" v-model="operacion.crypto_amount" placeholder="Cantidad de criptomonedas">
+          <label>Cantidad de criptomonedas a comprar/vender</label>
+          <input type="number" min="0.000001" v-model="operacion.crypto_amount">
         </div>
         <p>Cantidad en pesos argentinos ${{ operacion.money }}</p>
         <div class="form-group-row">
@@ -65,38 +65,33 @@ const ruta = useRouter()
 const store = userStore()
 const ManagerC = new ManagerCripto()
 
+//creo un objeto para guardar todo lo que el usuario llena en el formulario de compra/venta:
 let operacion = ref({
   user_id: store.Usuario,
-  action: 'purchase',
-  crypto_code: 'btc',
-  crypto_amount: 0,
-  money: 0,
-  datetime: ''
+  action: 'purchase', //por defecto es compra
+  crypto_code: 'btc', //por defecto es bitcoin
+  crypto_amount: 0, //cantidad que el usuario quiere comprar o vender
+  money: 0, //cuánto dinero sería en $
+  datetime: '' //la fecha y hora de la operación
 })
-const ActualizarPrecio = async () => {
-  function validarCantidadCripto(cantidad) {
-    const numeroCantidad = Number(cantidad)
-    return isNaN(numeroCantidad) || numeroCantidad <= 0 ? 0 : numeroCantidad
-  }
 
-  const cantidadCripto = validarCantidadCripto(operacion.value.crypto_amount)
-  if (cantidadCripto > 0) {
-    const { totalAsk, totalBid } = await ManagerC.TraerPrecio(operacion.value.crypto_code)
+//Función para actualizar el costo de las cripto en $:
+const ActualizarPrecio = async () => {
+  const cantidadCripto = Number(operacion.value.crypto_amount) || 0;
+  if (cantidadCripto <= 0) {
+    operacion.value.money = 0;
+    return;
+  }
+  const { totalAsk, totalBid } = await ManagerC.TraerPrecio(operacion.value.crypto_code)//totalAsk es precio si compro, totalBid es precio si vendo
     const precio = operacion.value.action === "purchase" ? totalAsk : totalBid;
     operacion.value.money = (precio * cantidadCripto).toFixed(2);
-    /* traer precio devuelve estos dos datos del siguiente objeto: que lo obtiene llamando a la api que lo llamamos pasando el tipo de criptomoneda
-    {
-"ask": 109568192.72,
-"totalAsk": 109568192.72, ++++++ me trae esto
-"bid": 100841520,
-"totalBid": 100841520, ++++++ y me trae esto. Son las dos cosas que le estoy pidiendo del objeto
-"time": 1733306089
+    /* traer precio devuelve todos los datos del objeto: que lo obtiene llamando a la api que lo llamamos pasando el tipo de criptomoneda
+  de todo ese objeto yo voy a usar dos datos:
+"totalAsk": 109568192.72, -----> me trae el precio de compra
+"totalBid": 100841520, -----> me trae el precio de venta.*/
+      
 }
-    */
-  } else {
-    operacion.value.money = 0
-  }
-}
+
 //Esto es para la fecha y hora:
 const fechaActual = new Date();
 let fecha = ref({
@@ -109,48 +104,43 @@ const Fecha = () => {
 }
 
 const CompraVenta = async () => {
-  const { action, crypto_amount } = operacion.value;
-  if (!crypto_amount || crypto_amount <= 0) { //valido que se coloque una cantidad
-    toast.warning('La cantidad debe ser mayor a cero. Operación cancelada');
+  const cantidadCripto = Number(operacion.value.crypto_amount);
+
+  if (cantidadCripto <= 0) {
+    toast.warning('Por favor ingrese una cantidad válida de criptomonedas.');
+    return;
+  }
+
+  if (operacion.value.action === 'sale' && saldoDeUsuario.value < cantidadCripto) {
+    toast.error('No tienes suficiente saldo para vender esta cantidad.');
     return;
   }
 
   try {
-    Fecha(); //Esto actualiza correctamente el datetime justo antes de operar
-    if (action === 'purchase') {
-      await Transacciones.crearTransaccion({ ...operacion.value });
-      toast.success('Compra exitosa');
-      ruta.push({ name: 'historial' });
-    } else {
-      // Venta: verificar saldo
-      if (saldoDeUsuario.value >= crypto_amount) {
-        await Transacciones.crearTransaccion({ ...operacion.value });
-        toast.success('Venta exitosa');
-        ruta.push({ name: 'historial' });
-      } else {
-        toast.warning('Cantidad de criptomonedas insuficientes. Operación cancelada');
-      }
-    }
+    Fecha(); //actualizo la fecha y hora
+    await Transacciones.crearTransaccion(operacion.value);
+    toast.success('Operación realizada con éxito.');
+    ruta.push({ name: 'historial' });
   } catch (error) {
     console.error(error);
-    toast.error('Ocurrió un error al procesar la transacción');
+    toast.error('Error al realizar la operación.');
   }
 };
 
 const saldoDeUsuario = ref(0);
 const conseguirSaldoUsuario = async () => {
   try {
-    await Transacciones.traerTransacciones()
-    const saldo = Transacciones.conseguirSaldo();
-    const moneda = saldo.find((cripto) => cripto.codigo === operacion.value.crypto_code);
-    saldoDeUsuario.value = moneda ? moneda.saldo : 0;
+    await Transacciones.traerTransacciones() //traigo las transacciones del usuario llamando a la api con la función
+    const saldo = Transacciones.conseguirSaldo(); //calculo los saldos de cada cripto
+    const moneda = saldo.find((cripto) => cripto.codigo === operacion.value.crypto_code);//Busca el saldo de la cripto que está seleccionada en el formulario
+    saldoDeUsuario.value = moneda ? moneda.saldo : 0;//si moneda existe actualiza el saldo, sino pone 0
   }
   catch (error) {
     console.log(error)
   }
 
 }
-watch(ActualizarPrecio, operacion.value);
+watch(() => operacion.value.crypto_amount, ActualizarPrecio); //si cambia un dato, ejecuta la función
 watch(fecha, Fecha);
 watch(() => operacion.value.crypto_code, conseguirSaldoUsuario)
 onMounted(() => {

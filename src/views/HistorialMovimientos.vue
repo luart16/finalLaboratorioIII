@@ -17,10 +17,10 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Tipo</th>
+              <th>Tipo Operación</th>
               <th>Criptomoneda</th>
               <th>Total</th>
-              <th>Dinero</th>
+              <th>Dinero (ARS)</th>
               <th>Fecha y Hora</th>
               <th>Acciones</th>
             </tr>
@@ -41,6 +41,18 @@
           </tbody>
         </table>
         <p v-else>No hay movimientos</p>
+      </div>
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div v-if="mostrarModalEliminar" class="modal-overlay">
+      <div class="modal-content">
+        <h2>¿Eliminar movimiento?</h2>
+        <p>Esta acción no se puede deshacer</p>
+        <div class="modal-actions">
+          <button @click="confirmarBorrado" class="btn-danger">Eliminar</button>
+          <button @click="mostrarModalEliminar = false" class="btn-cancel">Cancelar</button>
+        </div>
       </div>
     </div>
 
@@ -73,22 +85,12 @@
         </div>
         <div class="modal-actions">
           <button @click="guardarLoEditado" class="btn-save">Guardar</button>
-          <button @click="mostrarModal = false" class="btn-cancel">Cancelar</button>
+          <button @click="mostrarModalEditar = false" class="btn-cancel">Cancelar</button>
         </div>
       </div>
     </div>
 
-    <!-- Modal Eliminar -->
-    <div v-if="mostrarModalEliminar" class="modal-overlay">
-      <div class="modal-content">
-        <h2>¿Eliminar movimiento?</h2>
-        <p>Esta acción no se puede deshacer</p>
-        <div class="modal-actions">
-          <button @click="confirmarBorrado" class="btn-danger">Eliminar</button>
-          <button @click="mostrarModalEliminar = false" class="btn-cancel">Cancelar</button>
-        </div>
-      </div>
-    </div>
+
   </div>
   <div v-else>
     <RequiereLogin />
@@ -109,25 +111,23 @@ const toast = useToast()
 const managerCripto = new ManagerCripto()
 const store = userStore()
 
-// Estados reactivos
+// variables reactivas
 const isLoading = ref(true)
 const mensaje = ref('')
 const movimientoAEditar = ref({ time: '00:00' })
-const mostrarModal = ref(false)
+const mostrarModalEditar = ref(false) //abre y cierra modal
 const mostrarModalEliminar = ref(false)
-const movimientoAEliminar = ref(null)
+const movimientoAEliminar = ref(null) //guarda el id que se quiere borrar
 const movimientos = ref([])
 
 // Obtener datos iniciales: este método me trae todas las transacciones por usuario y lo guarda en movimientos, variable que voy a usar en el html para mostrarlos
 const datos = async () => {
   try {
     const respuesta = await Transacciones.traerTransacciones()
-    movimientos.value = respuesta
-
+    movimientos.value = respuesta.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))//ordeno las transacciones de más viejas a más nuevas
   } catch (error) {
     console.error('Error al cargar transacciones:', error)
-    mensaje.value = "Error al cargar los datos"
-    toast.warning(mensaje.value)
+    toast.warning("Error al cargar los datos")
   }
 }
 
@@ -144,8 +144,7 @@ const confirmarBorrado = async () => {
     await datos() // y recarga los movimientos ya actualizados con ese valor borrado
   } catch (error) {
     console.error('Error al eliminar:', error)
-    mensaje.value = "Error al eliminar la transacción"
-    toast.warning(mensaje.value)
+    toast.warning("Error al eliminar la transacción")
   } finally {
     mostrarModalEliminar.value = false //y por último vuelve el modal a false para cerrarlo
   }
@@ -153,7 +152,6 @@ const confirmarBorrado = async () => {
 
 // Lógica de edición
 const verificarParaEditar = async (id) => {
-  mensaje.value = ""
   const transaccion = movimientos.value.find(mov => mov._id === id)
 
   if (await validarTransaccion(transaccion)) {
@@ -167,21 +165,19 @@ const verificarParaEditar = async (id) => {
       datetime: fechaSinHora,
       time: horaSinFecha
     }
-    mostrarModal.value = true
+    mostrarModalEditar.value = true
   }
 }
 
 const validarTransaccion = async (transaccion) => {
-  if (!transaccion) {
-    mensaje.value = "Transacción no válida"
-    toast.warning(mensaje.value)
+  if (!transaccion) { //verifica que exista
+    toast.warning("Transacción no válida")
     return false
   }
 
   const cantidad = Number(transaccion.crypto_amount)
-  if (isNaN(cantidad) || cantidad <= 0) {
-    mensaje.value = "El monto debe ser un número positivo"
-    toast.warning(mensaje.value)
+  if (isNaN(cantidad) || cantidad <= 0) { //que el monto sea válido
+    toast.warning("El monto debe ser un número positivo")
     return false
   }
 
@@ -190,25 +186,19 @@ const validarTransaccion = async (transaccion) => {
     const criptoBalance = saldoDeCuenta.find(c => c.codigo === transaccion.crypto_code)
 
     if (!criptoBalance) {
-      mensaje.value = "Criptomoneda no encontrada en el balance"
-      toast.warning(mensaje.value)
-
+      toast.warning("Criptomoneda no encontrada en el balance")
       return false
     }
 
-    if (transaccion.action === 'sale' && cantidad > criptoBalance.saldo) {
-      mensaje.value = "Fondos insuficientes para esta transacción"
-      toast.warning(mensaje.value)
-
+    if (transaccion.action === 'sale' && cantidad > criptoBalance.saldo) {//que haya saldo
+      toast.warning("Fondos insuficientes para esta transacción")
       return false
     }
 
     return true
   } catch (error) {
     console.error('Error en validación:', error)
-    mensaje.value = "Error al validar la transacción"
-    toast.warning(mensaje.value)
-
+    toast.warning("Error al validar la transacción")
     return false
   }
 }
@@ -237,7 +227,7 @@ const guardarLoEditado = async () => {
       })
       toast.success("Modificación exitosa")
       await datos()
-      mostrarModal.value = false
+      mostrarModalEditar.value = false
     }
   } catch (error) {
     console.error('Error al guardar:', error)

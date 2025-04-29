@@ -10,9 +10,6 @@
         <RequiereLogin />
     </div>
     
-
-
-
 </template>
 
 <script setup>

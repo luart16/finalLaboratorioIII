@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+import { defineStore } from "pinia"; //defineStore es la función principal que usa pinia para crear un store
 
 export const userStore = defineStore("User", {
   state: () => {
